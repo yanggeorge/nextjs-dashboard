@@ -51,13 +51,13 @@ const customers = [
 const invoices = [
   {
     customer_id: customers[0].id,
-    amount: 15795,
+    amount: 15_795,
     status: 'pending',
     date: '2022-12-06',
   },
   {
     customer_id: customers[1].id,
-    amount: 20348,
+    amount: 20_348,
     status: 'pending',
     date: '2022-11-14',
   },
@@ -69,19 +69,19 @@ const invoices = [
   },
   {
     customer_id: customers[3].id,
-    amount: 44800,
+    amount: 44_800,
     status: 'paid',
     date: '2023-09-10',
   },
   {
     customer_id: customers[5].id,
-    amount: 34577,
+    amount: 34_577,
     status: 'pending',
     date: '2023-08-05',
   },
   {
     customer_id: customers[2].id,
-    amount: 54246,
+    amount: 54_246,
     status: 'pending',
     date: '2023-07-16',
   },
@@ -93,7 +93,7 @@ const invoices = [
   },
   {
     customer_id: customers[3].id,
-    amount: 32545,
+    amount: 32_545,
     status: 'paid',
     date: '2023-06-09',
   },
@@ -144,4 +144,4 @@ const revenue = [
   { month: 'Dec', revenue: 4800 },
 ];
 
-export { users, customers, invoices, revenue };
+export { customers, invoices, revenue, users };

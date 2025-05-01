@@ -1,11 +1,11 @@
-"use server";
+'use server';
 
-import { z } from "zod";
-import postgres from "postgres";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import postgres from 'postgres';
+import { z } from 'zod';
 
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: "require" });
+const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
 export type State = {
   errors?: {
@@ -22,14 +22,12 @@ const FormSchema = z.object({
   id: z.string(),
   customerId: z
     .string({
-      invalid_type_error: "Please select a customer.",
+      invalid_type_error: 'Please select a customer.',
     })
-    .min(1, "Please select a customer."), // 添加 .min(1) 确保非空字符串
-  amount: z.coerce
-    .number()
-    .gt(0, { message: "Please enter an amount greater than $0." }),
-  status: z.enum(["pending", "paid"], {
-    invalid_type_error: "Please select an invoice status.",
+    .min(1, 'Please select a customer.'), // 添加 .min(1) 确保非空字符串
+  amount: z.coerce.number().gt(0, { message: 'Please enter an amount greater than $0.' }),
+  status: z.enum(['pending', 'paid'], {
+    invalid_type_error: 'Please select an invoice status.',
   }),
   date: z.string(),
 });
@@ -40,15 +38,12 @@ const CreateInvoice = FormSchema.omit({ id: true, date: true });
 type CreateInvoiceFields = z.infer<typeof CreateInvoice>;
 type CreateInvoiceKeys = keyof CreateInvoiceFields;
 
-export async function createInvoice(
-  prevState: State,
-  formData: FormData
-): Promise<State> {
+export async function createInvoice(prevState: State, formData: FormData): Promise<State> {
   // 1. 获取原始输入值
   const rawData = {
-    customerId: formData.get("customerId"),
-    amount: formData.get("amount"),
-    status: formData.get("status"),
+    customerId: formData.get('customerId'),
+    amount: formData.get('amount'),
+    status: formData.get('status'),
   };
 
   // 2. 尝试完整验证
@@ -56,7 +51,7 @@ export async function createInvoice(
 
   // 3. 处理验证失败的情况
   if (!validatedFields.success) {
-    const fieldErrors = validatedFields.error.flatten().fieldErrors;
+    const { fieldErrors } = validatedFields.error.flatten();
     const partiallyValidatedData: Partial<CreateInvoiceFields> = {};
 
     // 遍历 Schema 中的每个字段
@@ -79,38 +74,34 @@ export async function createInvoice(
     return {
       errors: fieldErrors,
       validatedData: partiallyValidatedData, // 返回成功解析的部分数据
-      message: "Missing or invalid fields. Failed to Create Invoice.",
+      message: 'Missing or invalid fields. Failed to Create Invoice.',
     };
   }
   // Prepare data for insertion into the database
   const { customerId, amount, status } = validatedFields.data;
   const amountInCents = amount * 100;
-  const date = new Date().toISOString().split("T")[0];
+  const date = new Date().toISOString().split('T')[0];
 
   try {
     await sql`
-    INSERT INTO invoices (customer_id, amount, status, date)
-    VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
-  `;
+      INSERT INTO invoices (customer_id, amount, status, date)
+      VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
+    `;
   } catch (error) {
-    console.error("Database Error:", error);
+    console.error('Database Error:', error);
   }
 
-  revalidatePath("/dashboard/invoices");
-  redirect("/dashboard/invoices");
+  revalidatePath('/dashboard/invoices');
+  redirect('/dashboard/invoices');
 }
 
-const UpdateInvoice = FormSchema.omit({ id: true, date: true });
-export async function updateInvoice(
-  id: string,
-  prevState: State,
-  formData: FormData
-): Promise<State> {
+const _UpdateInvoice = FormSchema.omit({ id: true, date: true });
+export async function updateInvoice(id: string, prevState: State, formData: FormData): Promise<State> {
   // 1. 获取原始输入值
   const rawData = {
-    customerId: formData.get("customerId"),
-    amount: formData.get("amount"),
-    status: formData.get("status"),
+    customerId: formData.get('customerId'),
+    amount: formData.get('amount'),
+    status: formData.get('status'),
   };
 
   // 2. 尝试完整验证
@@ -118,7 +109,7 @@ export async function updateInvoice(
 
   // 3. 处理验证失败的情况
   if (!validatedFields.success) {
-    const fieldErrors = validatedFields.error.flatten().fieldErrors;
+    const { fieldErrors } = validatedFields.error.flatten();
     const partiallyValidatedData: Partial<CreateInvoiceFields> = {};
 
     // 遍历 Schema 中的每个字段
@@ -141,7 +132,7 @@ export async function updateInvoice(
     return {
       errors: fieldErrors,
       validatedData: partiallyValidatedData, // 返回成功解析的部分数据
-      message: "Missing or invalid fields. Failed to Create Invoice.",
+      message: 'Missing or invalid fields. Failed to Create Invoice.',
     };
   }
   const { customerId, amount, status } = validatedFields.data;
@@ -154,15 +145,15 @@ export async function updateInvoice(
       WHERE id = ${id}
     `;
   } catch (error) {
-    console.error("Database Error:", error);
+    console.error('Database Error:', error);
   }
 
-  revalidatePath("/dashboard/invoices");
-  redirect("/dashboard/invoices");
+  revalidatePath('/dashboard/invoices');
+  redirect('/dashboard/invoices');
 }
 
 export async function deleteInvoice(id: string) {
-  throw new Error("Function not implemented.");
+  throw new Error('Function not implemented.');
   await sql`DELETE FROM invoices WHERE id = ${id}`;
-  revalidatePath("/dashboard/invoices");
+  revalidatePath('/dashboard/invoices');
 }
