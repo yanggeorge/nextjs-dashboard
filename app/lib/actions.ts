@@ -40,7 +40,10 @@ const CreateInvoice = FormSchema.omit({ id: true, date: true });
 type CreateInvoiceFields = z.infer<typeof CreateInvoice>;
 type CreateInvoiceKeys = keyof CreateInvoiceFields;
 
-export async function createInvoice(prevState: State, formData: FormData) {
+export async function createInvoice(
+  prevState: State,
+  formData: FormData
+): Promise<State> {
   // 1. 获取原始输入值
   const rawData = {
     customerId: formData.get("customerId"),
@@ -102,20 +105,45 @@ export async function updateInvoice(
   id: string,
   prevState: State,
   formData: FormData
-) {
-  const validatedFields = UpdateInvoice.safeParse({
+): Promise<State> {
+  // 1. 获取原始输入值
+  const rawData = {
     customerId: formData.get("customerId"),
     amount: formData.get("amount"),
     status: formData.get("status"),
-  });
+  };
 
+  // 2. 尝试完整验证
+  const validatedFields = CreateInvoice.safeParse(rawData);
+
+  // 3. 处理验证失败的情况
   if (!validatedFields.success) {
+    const fieldErrors = validatedFields.error.flatten().fieldErrors;
+    const partiallyValidatedData: Partial<CreateInvoiceFields> = {};
+
+    // 遍历 Schema 中的每个字段
+    for (const key of Object.keys(CreateInvoice.shape) as CreateInvoiceKeys[]) {
+      const fieldSchema = CreateInvoice.shape[key];
+      const rawValue = rawData[key];
+
+      // 如果原始错误对象中没有该字段的错误，则尝试单独解析它
+      if (!fieldErrors[key]) {
+        const fieldResult = fieldSchema.safeParse(rawValue);
+        if (fieldResult.success) {
+          // 类型断言是安全的，因为 key 是 CreateInvoiceKeys
+          partiallyValidatedData[key] = fieldResult.data as any;
+        }
+        // 注意：如果单独解析也失败了（理论上不太可能，除非 Zod 内部逻辑复杂），
+        // 这里我们选择不添加它到 partiallyValidatedData，错误信息已在 fieldErrors 中。
+      }
+    }
+
     return {
-      errors: validatedFields.error.flatten().fieldErrors,
-      message: "Missing Fields. Failed to Update Invoice.",
+      errors: fieldErrors,
+      validatedData: partiallyValidatedData, // 返回成功解析的部分数据
+      message: "Missing or invalid fields. Failed to Create Invoice.",
     };
   }
-
   const { customerId, amount, status } = validatedFields.data;
   const amountInCents = amount * 100;
 
