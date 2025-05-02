@@ -88,6 +88,24 @@ const config = [
           argsIgnorePattern: '^_', // Ignore arguments starting with an underscore
         },
       ],
+      'padding-line-between-statements': [
+        'error',
+        {
+          blankLine: 'always',
+          prev: 'function',
+          next: 'function',
+        },
+        {
+          blankLine: 'always',
+          prev: 'export',
+          next: 'function',
+        },
+        {
+          blankLine: 'always',
+          prev: 'function',
+          next: 'export',
+        },
+      ],
     },
   },
   {
